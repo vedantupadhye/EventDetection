@@ -1,0 +1,34 @@
+ Standard Pipeline (Used in Industrial AI/ML Systems)
+Step 1: Object Detection
+Use a model like YOLOv8, EfficientDet, or SSD to detect key objects (person, tool, PPE, etc.)
+
+Identify what’s in the frame
+
+Example: Is there a bottle, welding torch, helmet, glasses, etc.?
+
+Step 2: Pose Estimation (Optional but Powerful)
+Use MediaPipe, OpenPose, or HRNet
+
+Helps identify key body joints (e.g., hands, eyes, torso, head)
+
+Useful to know where the object is in relation to the person (e.g., hand near mouth = drinking)
+
+Step 3: Temporal Action Detection
+Use short video clips (10–30 frames)
+
+Models: I3D, SlowFast, TSM, or custom 3D CNNs
+
+Focused on actions like “welding”, “bending”, “lifting”, “running”, etc.
+
+Step 4: Decision Logic (Business Rule Engine / Post-processing)
+Combine signals from above steps:
+
+"If person is present" + "glasses not detected" + "torch detected near hands" → glasses not worn while welding
+
+May use:
+
+Simple rules
+
+Lightweight ML classifiers
+
+Or symbolic logic (depending on the environment)
