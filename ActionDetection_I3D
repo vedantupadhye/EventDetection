@@ -1,0 +1,53 @@
+# Step 1: Install dependencies
+!pip install -q tensorflow tensorflow-hub tensorflow-io
+
+import tensorflow as tf
+import tensorflow_hub as hub
+import numpy as np
+import cv2
+import os
+import tensorflow_io as tfio
+from google.colab import files
+from IPython.display import Video, display
+
+# Step 2: Upload a video
+uploaded = files.upload()
+video_path = list(uploaded.keys())[0]
+display(Video(video_path, embed=True))
+
+# Step 3: Load I3D model from TF Hub
+i3d_model = hub.load("https://tfhub.dev/deepmind/i3d-kinetics-400/1").signatures["default"]
+
+# Step 4: Preprocess video frames
+def load_video(path, max_frames=64, resize=(224, 224)):
+    cap = cv2.VideoCapture(path)
+    frames = []
+    while len(frames) < max_frames:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame = cv2.resize(frame, resize)
+        frame = frame / 255.0
+        frames.append(frame)
+    cap.release()
+    frames = np.array(frames)
+    frames = tf.convert_to_tensor(frames, dtype=tf.float32)
+    return tf.expand_dims(frames, axis=0)
+
+video_tensor = load_video(video_path)
+
+# Step 5: Run the model
+logits = i3d_model(video_tensor)['default']
+probs = tf.nn.softmax(logits)
+
+# Step 6: Get class names
+kinetics_labels = tf.keras.utils.get_file(
+    'kinetics_400_labels.txt',
+    'https://raw.githubusercontent.com/deepmind/kinetics-i3d/master/data/label_map.txt')
+with open(kinetics_labels, 'r') as f:
+    labels = f.read().splitlines()
+
+# Step 7: Print top predictions
+top5 = tf.argsort(probs[0], direction='DESCENDING')[:5]
+for i in top5:
+    print(f"{labels[i]}: {probs[0][i].numpy():.2%}")
